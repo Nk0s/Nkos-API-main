@@ -1,0 +1,37 @@
+services:
+  # 1. Build image
+  builder:
+    build:
+      context: ./server
+    image: &image nkos/api:local
+    entrypoint: echo
+    command: 'Sorry I will not run, my destiny is to be built and die, see you in next run!'
+
+  # 2. Database
+  storage:
+    image: postgres:14
+    ports:
+      - 5432:5432
+    command: postgres -c 'max_connections=400'
+    environment:
+      POSTGRES_DB: "service"
+      POSTGRES_USER: "service"
+      POSTGRES_PASSWORD: "testpassword"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U service" ]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+
+  api:
+    image: *image
+    depends_on:
+      builder:
+        condition: service_completed_successfully
+      storage:
+        condition: service_healthy
+    env_file:
+      - server/.env
+    ports:
+      - 3001:3001
+    command: npm run start
