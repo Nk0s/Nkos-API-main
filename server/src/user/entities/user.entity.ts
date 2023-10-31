@@ -17,6 +17,6 @@ export class User {
   @Column()
   age: number;
 
-  @Column()
+  @Column({ length: 1000 })
   description: string;
 }

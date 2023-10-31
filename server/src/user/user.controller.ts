@@ -8,10 +8,13 @@ import {
   Get,
   Request,
   Param,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { User } from './entities/user.entity';
+import { GetUser } from './GetUser';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller()
@@ -30,12 +33,19 @@ export class UserController {
   }
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  getProfile(@Request() req) {
-    return this.userService.profile(req.user);
+  getProfile(user: User) {
+    return this.userService.profile(user);
   }
+
   @Get('usersfound')
   @UseGuards(JwtAuthGuard)
-  findOne(@Param(':login') login: string) {
+  findOne(@Param() login: string) {
     return this.userService.findOne(login);
+  }
+
+  @Patch('profile/edit')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@GetUser() user: User, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.editprofile(user, updateUserDto);
   }
 }

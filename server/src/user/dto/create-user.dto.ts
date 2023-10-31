@@ -10,10 +10,9 @@ export class CreateUserDto {
   password: string;
 
   age: number;
-  typ: 'expense' | 'income'
   @MaxLength(1000, {
     message: 'Description too long. Maximum number of symbols 1000',
   })
   description: string;
-  user: User
+  user: User;
 }

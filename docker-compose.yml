@@ -23,6 +23,7 @@ services:
       timeout: 1s
       retries: 5
 
+  # 3. Api
   api:
     image: *image
     depends_on:
@@ -34,4 +35,4 @@ services:
       - server/.env
     ports:
       - 3001:3001
-    command: npm run start
+    command: npm run start 

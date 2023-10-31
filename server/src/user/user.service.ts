@@ -10,6 +10,8 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from 'src/types/types';
+import * as bcrypt from 'bcrypt';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -17,30 +19,25 @@ export class UserService {
     private readonly jwtservice: JwtService,
   ) {}
 
-  async create(CreateUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto) {
     const existEmail = await this.userRepository.findOne({
       where: {
-        email: CreateUserDto.email,
+        email: createUserDto.email,
+        login: createUserDto.login,
       },
-    });
-    const existUser = await this.userRepository.findOne({
-      where: {
-        login: CreateUserDto.login,
-      },
-    });
-    if (existEmail) throw new BadRequestException('This email already exist!')
-
-    if (existUser) throw new BadRequestException('This login already exist!')
-
-    const user = await this.userRepository.save({
-      login: CreateUserDto.login,
-      description: CreateUserDto.description,
-      age: CreateUserDto.age,
-      email: CreateUserDto.email,
-      password: CreateUserDto.password,
     })
-    const token = this.jwtservice.sign({ login: CreateUserDto.login })
+    if (existEmail)
+      throw new BadRequestException('This login or email alreadt exist!');
 
+    const saltOrRounds = 10;
+    const user = await this.userRepository.save({
+      login: createUserDto.login,
+      description: createUserDto.description,
+      age: createUserDto.age,
+      email: createUserDto.email,
+      password: await bcrypt.hashSync(createUserDto.password, saltOrRounds),
+    });
+    const token = this.jwtservice.sign({ login: createUserDto.login });
     return { user, token };
   }
 
@@ -48,7 +45,7 @@ export class UserService {
     const search = await this.userRepository.findOne({
       where: { login },
     });
-    if (!search) throw new NotFoundException('User not found')
+    if (!search) throw new NotFoundException('User not found');
     return search;
   }
   async findAll() {
@@ -68,5 +65,19 @@ export class UserService {
         age: user.age,
       }),
     };
+  }
+  async editprofile(user: User, updateUserDto: UpdateUserDto) {
+    const saltOrRounds = 10;
+    user.email = updateUserDto.email;
+    user.description = updateUserDto.description;
+    user.age = updateUserDto.age;
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hashSync(
+        updateUserDto.password,
+        saltOrRounds,
+      );
+    }
+    await this.userRepository.update(user, updateUserDto);
+    return user;
   }
 }
