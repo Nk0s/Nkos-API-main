@@ -63,6 +63,7 @@ export class UserService {
       }),
     };
   }
+  //Я ошибся и то что ниже не работает((((
   async editprofile(user: User, updateUserDto: UpdateUserDto) {
     const saltOrRounds = 10;
     user.email = updateUserDto.email;
