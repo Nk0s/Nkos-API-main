@@ -33,8 +33,8 @@ export class UserController {
   }
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  getProfile(user: User) {
-    return this.userService.profile(user);
+  getProfile(@Request() req) {
+    return this.userService.profile(req.user);
   }
 
   @Get('usersfound')

@@ -21,11 +21,8 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     const existEmail = await this.userRepository.findOne({
-      where: {
-        email: createUserDto.email,
-        login: createUserDto.login,
-      },
-    })
+      where: [{ login: createUserDto.login }, { email: createUserDto.email }],
+    });
     if (existEmail)
       throw new BadRequestException('This login or email alreadt exist!');
 
