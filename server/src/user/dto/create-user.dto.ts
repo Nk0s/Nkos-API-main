@@ -1,6 +1,6 @@
 import { IsEmail, MaxLength, MinLength } from 'class-validator';
-import { User } from '../entities/user.entity';
 export class CreateUserDto {
+  @MinLength(4, { message: 'Login must be more then 4 symbols' })
   login: string;
 
   @IsEmail()
@@ -14,5 +14,4 @@ export class CreateUserDto {
     message: 'Description too long. Maximum number of symbols 1000',
   })
   description: string;
-  user: User;
 }

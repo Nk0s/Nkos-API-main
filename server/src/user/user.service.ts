@@ -16,7 +16,7 @@ import * as bcrypt from 'bcrypt';
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly jwtservice: JwtService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -34,7 +34,7 @@ export class UserService {
       email: createUserDto.email,
       password: await bcrypt.hashSync(createUserDto.password, saltOrRounds),
     });
-    const token = this.jwtservice.sign({ login: createUserDto.login });
+    const token = this.jwtService.sign({ login: createUserDto.login });
     return { user, token };
   }
 
@@ -49,33 +49,47 @@ export class UserService {
     return await this.userRepository.find();
   }
   async profile(user: IUser) {
-    const { login, email, description, age } = user;
-    return {
-      login,
-      email,
-      description,
-      age,
-      token: this.jwtservice.sign({
-        login: user.login,
-        email: user.email,
-        description: user.description,
-        age: user.age,
-      }),
-    };
+    const { login } = user;
+    this.userRepository.findOne({ where: { login } });
+    return user;
   }
   //Я ошибся и то что ниже не работает((((
-  async editprofile(user: User, updateUserDto: UpdateUserDto) {
-    const saltOrRounds = 10;
-    user.email = updateUserDto.email;
-    user.description = updateUserDto.description;
-    user.age = updateUserDto.age;
-    if (updateUserDto.password) {
-      user.password = await bcrypt.hashSync(
-        updateUserDto.password,
-        saltOrRounds,
-      );
-    }
-    await this.userRepository.update(user, updateUserDto);
+  // async editProfile(user: User, updateUserDto: UpdateUserDto) {
+  // const profile = await this.userRepository.findOne({
+  // where: {
+  // login: updateUserDto.login,
+  //      },
+  //    });
+  //    const saltOrRounds = 10;
+  //    if (updateUserDto.login) {
+  //      user.login = updateUserDto.login;
+  //    }
+  //    if (updateUserDto.email) {
+  //      user.email = updateUserDto.email;
+  //    }
+  //    if (updateUserDto.description) {
+  //      user.description = updateUserDto.description;
+  //    }
+  //    if (updateUserDto.age) {
+  //      user.age = updateUserDto.age;
+  //    }
+  //    if (updateUserDto.password) {
+  //      user.password = await bcrypt.hashSync(
+  //        updateUserDto.password,
+  //        saltOrRounds,
+  //      );
+  //    }
+  //    await this.userRepository.save({ ...profile, ...UpdateUserDto });
+  //    return user;
+  //  }
+  async editProfile(user: User, updateUserDto: UpdateUserDto) {
+    const profile = await this.userRepository.findOne({
+      where: {
+        login: user.login,
+      },
+    });
+
+    await this.userRepository.save({ ...profile, ...updateUserDto });
     return user;
   }
 }

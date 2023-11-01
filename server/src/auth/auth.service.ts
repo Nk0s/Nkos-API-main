@@ -29,7 +29,7 @@ export class AuthService {
       age,
       token: this.jwtService.sign({
         login: user.login,
-        email: user.login,
+        email: user.email,
         description: user.description,
         age: user.age,
       }),
