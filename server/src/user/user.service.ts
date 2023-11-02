@@ -11,11 +11,12 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from 'src/types/types';
 import * as bcrypt from 'bcrypt';
+import { paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(User) private userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -45,51 +46,58 @@ export class UserService {
     if (!search) throw new NotFoundException('User not found');
     return search;
   }
-  async findAll() {
-    return await this.userRepository.find();
-  }
+
   async profile(user: IUser) {
     const { login } = user;
     this.userRepository.findOne({ where: { login } });
     return user;
   }
-  //Я ошибся и то что ниже не работает((((
-  // async editProfile(user: User, updateUserDto: UpdateUserDto) {
-  // const profile = await this.userRepository.findOne({
-  // where: {
-  // login: updateUserDto.login,
-  //      },
-  //    });
-  //    const saltOrRounds = 10;
-  //    if (updateUserDto.login) {
-  //      user.login = updateUserDto.login;
-  //    }
-  //    if (updateUserDto.email) {
-  //      user.email = updateUserDto.email;
-  //    }
-  //    if (updateUserDto.description) {
-  //      user.description = updateUserDto.description;
-  //    }
-  //    if (updateUserDto.age) {
-  //      user.age = updateUserDto.age;
-  //    }
-  //    if (updateUserDto.password) {
-  //      user.password = await bcrypt.hashSync(
-  //        updateUserDto.password,
-  //        saltOrRounds,
-  //      );
-  //    }
-  //    await this.userRepository.save({ ...profile, ...UpdateUserDto });
-  //    return user;
-  //  }
   async editProfile(user: User, updateUserDto: UpdateUserDto) {
     const profile = await this.userRepository.findOne({
       where: {
         login: user.login,
       },
     });
+    const saltOrRounds = 10;
+    if (updateUserDto.login) {
+      user.login = updateUserDto.login;
+    }
+    if (updateUserDto.email) {
+      user.email = updateUserDto.email;
+    }
+    if (updateUserDto.description) {
+      user.description = updateUserDto.description;
+    }
+    if (updateUserDto.age) {
+      user.age = updateUserDto.age;
+    }
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hashSync(
+        updateUserDto.password,
+        saltOrRounds,
+      );
+    }
 
-    await this.userRepository.save({ ...profile, ...updateUserDto });
+    await this.userRepository.save({ ...profile, ...user });
     return user;
+  }
+  async findAll(
+    page: number,
+    limit: number,
+    filterLogin?: string,
+  ): Promise<[User[], number]> {
+    const skip = (page - 1) * limit;
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .skip(skip)
+      .take(limit);
+
+    if (filterLogin) {
+      query.where('user.login LIKE :login', { login: `%${filterLogin}%` });
+    }
+
+    const [users, total] = await query.getManyAndCount();
+
+    return [users, total];
   }
 }

@@ -9,6 +9,7 @@ import {
   Request,
   Param,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -26,10 +27,16 @@ export class UserController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
-  @Get('users')
-  @UseGuards(JwtAuthGuard)
-  findAll() {
-    return this.userService.findAll();
+  @Get('users/')
+  async findAll(
+    @Query('page') page,
+    @Query('limit') limit,
+    @Query('filterLogin') filterLogin?: string,
+  ) {
+    const parsedPage = parseInt(page, 10);
+    const parsedLimit = parseInt(limit, 10);
+
+    return this.userService.findAll(parsedPage, parsedLimit, filterLogin);
   }
   @Get('profile')
   @UseGuards(JwtAuthGuard)
